@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>법령정보 검색 도우미</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1C2B45;
+    --ink-soft:#2C3C5C;
+    --paper:#F6F3EA;
+    --paper-deep:#EFEADC;
+    --seal:#A63A2E;
+    --seal-dark:#7E2A21;
+    --brass:#AD8C4E;
+    --charcoal:#2B2A28;
+    --line:#D9D2BE;
+    --line-soft:#E4DFCF;
+    --ok:#3E5C4A;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'Noto Sans KR', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body{
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(28,43,69,0.05) 1px, transparent 1px);
+    background-size:22px 22px;
+  }
+
+  .wrap{
+    max-width:860px;
+    margin:0 auto;
+    padding:40px 24px 80px;
+  }
+
+  /* ---------- Header : letterhead ---------- */
+  header{
+    text-align:center;
+    padding-bottom:28px;
+    margin-bottom:32px;
+    position:relative;
+  }
+
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.28em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    margin-bottom:14px;
+  }
+
+  h1{
+    font-family:'Noto Serif KR', serif;
+    font-weight:900;
+    font-size:clamp(28px, 5vw, 40px);
+    color:var(--ink);
+    margin:0 0 8px;
+    letter-spacing:-0.01em;
+  }
+
+  .subtitle{
+    font-size:14px;
+    color:#5A5648;
+    margin:0;
+  }
+
+  .letterhead-rule{
+    margin-top:22px;
+    height:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+  .letterhead-rule::before,
+  .letterhead-rule::after{
+    content:"";
+    height:2px;
+    flex:1;
+    background:var(--ink);
+  }
+  .letterhead-rule .diamond{
+    width:6px;height:6px;
+    background:var(--brass);
+    transform:rotate(45deg);
+    flex:none;
+  }
+
+  /* ---------- Search card ---------- */
+  .card{
+    background:#FFFDF8;
+    border:1px solid var(--line);
+    box-shadow: 0 1px 0 var(--line), 0 14px 30px -20px rgba(28,43,69,0.35);
+    padding:28px 26px 24px;
+    position:relative;
+  }
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:6px;
+    border:1px solid var(--line-soft);
+    pointer-events:none;
+  }
+
+  .tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:20px;
+    border-bottom:2px solid var(--ink);
+  }
+  .tab{
+    font-family:'Noto Serif KR', serif;
+    font-weight:700;
+    font-size:14px;
+    background:var(--paper-deep);
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    border-bottom:none;
+    padding:9px 16px 8px;
+    cursor:pointer;
+    transition:all .15s ease;
+    position:relative;
+    top:2px;
+  }
+  .tab:hover{ color:var(--ink); }
+  .tab.active{
+    background:var(--ink);
+    color:var(--paper);
+    border-color:var(--ink);
+  }
+
+  .search-row{
+    display:flex;
+    align-items:stretch;
+    gap:14px;
+  }
+
+  .field{
+    flex:1;
+    position:relative;
+  }
+  .field label{
+    display:block;
+    font-size:11px;
+    letter-spacing:0.14em;
+    color:#8A8570;
+    margin-bottom:6px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .field input{
+    width:100%;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:17px;
+    color:var(--ink);
+    background:transparent;
+    border:none;
+    border-bottom:2px solid var(--ink);
+    padding:6px 2px 10px;
+    outline:none;
+  }
+  .field input::placeholder{ color:#B7B096; }
+  .field input:focus{ border-color:var(--seal); }
+
+  /* ---------- Seal stamp button ---------- */
+  .seal-btn{
+    flex:none;
+    width:76px;
+    height:76px;
+    align-self:flex-end;
+    background:transparent;
+    border:none;
+    cursor:pointer;
+    padding:0;
+    position:relative;
+  }
+  .seal-face{
+    width:100%;
+    height:100%;
+    background:var(--seal);
+    border:2.5px solid var(--seal-dark);
+    color:#F8EFE6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    font-family:'Noto Serif KR', serif;
+    font-weight:900;
+    line-height:1;
+    transform:rotate(-3deg);
+    transition:transform .12s ease;
+    box-shadow: 2px 3px 0 rgba(28,43,69,0.18);
+  }
+  .seal-face span{ display:block; }
+  .seal-face .l1{ font-size:15px; letter-spacing:2px; }
+  .seal-face .l2{ font-size:15px; letter-spacing:2px; margin-top:2px;}
+  .seal-btn:hover .seal-face{ transform:rotate(-3deg) scale(1.03); }
+  .seal-btn.stamping .seal-face{
+    animation: stampHit .38s ease;
+  }
+  @keyframes stampHit{
+    0%{ transform:rotate(-3deg) scale(1); }
+    35%{ transform:rotate(-1deg) scale(0.86); filter:brightness(0.92); }
+    60%{ transform:rotate(-4deg) scale(1.08); }
+    100%{ transform:rotate(-3deg) scale(1); }
+  }
+  .seal-btn:focus-visible .seal-face{ outline:3px solid var(--ink); outline-offset:2px; }
+
+  .hint{
+    margin-top:10px;
+    font-size:12px;
+    color:#8A8570;
+  }
+
+  /* ---------- Quick access ---------- */
+  section.block{ margin-top:40px; }
+  .block-title{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .block-title h2{
+    font-family:'Noto Serif KR', serif;
+    font-size:18px;
+    font-weight:700;
+    color:var(--ink);
+    margin:0;
+  }
+  .block-title .count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:#8A8570;
+  }
+
+  .chip-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(140px,1fr));
+    gap:10px;
+  }
+  .chip{
+    position:relative;
+    background:#FFFDF8;
+    border:1px solid var(--line);
+    border-left:4px solid var(--brass);
+    padding:12px 14px;
+    text-align:left;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    color:var(--ink);
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .chip:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 16px -10px rgba(28,43,69,0.4);
+    border-left-color:var(--seal);
+  }
+  .chip .tag{
+    display:block;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    color:#9A9478;
+    margin-top:4px;
+  }
+
+  /* ---------- Recent log (ledger) ---------- */
+  .ledger{
+    border-top:2px solid var(--ink);
+    border-bottom:1px solid var(--line);
+  }
+  .ledger-row{
+    display:grid;
+    grid-template-columns:32px 1fr auto auto;
+    align-items:center;
+    gap:12px;
+    padding:11px 4px;
+    border-bottom:1px dashed var(--line);
+    cursor:pointer;
+    transition:background .12s ease;
+  }
+  .ledger-row:hover{ background:var(--paper-deep); }
+  .ledger-row .no{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:#9A9478;
+  }
+  .ledger-row .kw{
+    font-size:14.5px;
+    color:var(--ink);
+    font-weight:500;
+  }
+  .ledger-row .cat{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    background:var(--paper-deep);
+    border:1px solid var(--line);
+    padding:2px 8px;
+  }
+  .ledger-row .time{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:#9A9478;
+  }
+  .empty-log{
+    padding:24px 4px;
+    text-align:center;
+    color:#9A9478;
+    font-size:13px;
+  }
+
+  footer{
+    margin-top:48px;
+    text-align:center;
+    font-size:11.5px;
+    color:#9A9478;
+    line-height:1.7;
+  }
+  footer a{ color:var(--ink-soft); }
+
+  @media (max-width:480px){
+    .wrap{ padding:28px 16px 60px; }
+    .search-row{ flex-direction:column; }
+    .seal-btn{ width:100%; height:52px; align-self:stretch; }
+    .seal-face{ flex-direction:row; gap:8px; transform:rotate(0deg); }
+    .seal-btn:hover .seal-face{ transform:scale(1.02); }
+    @keyframes stampHit{
+      0%{ transform:scale(1); }
+      35%{ transform:scale(0.92); filter:brightness(0.92); }
+      60%{ transform:scale(1.05); }
+      100%{ transform:scale(1); }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .seal-face, .chip, .ledger-row{ transition:none; animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">MINISTRY OF GOVERNMENT LEGISLATION · LAW.GO.KR LINKED</div>
+    <h1>법령정보 검색 도우미</h1>
+    <p class="subtitle">국가법령정보센터 통합 검색 — 법령 · 판례 · 자치법규 · 행정규칙</p>
+    <div class="letterhead-rule"><span class="diamond"></span></div>
+  </header>
+
+  <div class="card">
+    <div class="tabs" id="tabs" role="tablist" aria-label="검색 유형">
+      <button class="tab active" data-cat="law" role="tab" aria-selected="true">법령</button>
+      <button class="tab" data-cat="prec" role="tab" aria-selected="false">판례</button>
+      <button class="tab" data-cat="ordin" role="tab" aria-selected="false">자치법규</button>
+      <button class="tab" data-cat="admrul" role="tab" aria-selected="false">행정규칙</button>
+    </div>
+
+    <form id="searchForm" autocomplete="off">
+      <div class="search-row">
+        <div class="field">
+          <label for="q" id="fieldLabel">법령명 또는 키워드</label>
+          <input type="text" id="q" name="q" placeholder="예) 근로기준법, 민법 제750조, 정보통신망법" />
+        </div>
+        <button type="submit" class="seal-btn" id="sealBtn" aria-label="법제처 국가법령정보센터에서 검색">
+          <span class="seal-face">
+            <span class="l1">검</span>
+            <span class="l2">색</span>
+          </span>
+        </button>
+      </div>
+      <p class="hint" id="hintText">국가법령정보센터(law.go.kr)의 검색 결과가 새 탭에서 열립니다.</p>
+    </form>
+  </div>
+
+  <section class="block">
+    <div class="block-title">
+      <h2>자주 찾는 법령</h2>
+      <span class="count">QUICK ACCESS</span>
+    </div>
+    <div class="chip-grid" id="quickAccess"></div>
+  </section>
+
+  <section class="block">
+    <div class="block-title">
+      <h2>최근 검색</h2>
+      <span class="count" id="logCount">접수대장 0건</span>
+    </div>
+    <div class="ledger" id="ledger">
+      <div class="empty-log">아직 검색 기록이 없습니다.</div>
+    </div>
+  </section>
+
+  <footer>
+    본 도구는 검색어를 법제처 국가법령정보센터(law.go.kr) 공식 검색 페이지로 전달하는 도우미입니다.<br>
+    법령 원문 및 최신 개정 정보는 반드시 국가법령정보센터에서 직접 확인하시기 바랍니다.
+  </footer>
+
+</div>
+
+<script>
+  const CATS = {
+    law:    { label:'법령명 또는 키워드',   placeholder:'예) 근로기준법, 민법 제750조, 정보통신망법', base:'https://www.law.go.kr/lsSc.do',    param:'query', tag:'법령' },
+    prec:   { label:'판례 키워드 또는 사건번호', placeholder:'예) 부당해고, 2018다12345',                base:'https://www.law.go.kr/precSc.do',  param:'query', extra:{menuId:'1'}, tag:'판례' },
+    ordin:  { label:'자치법규명 또는 키워드',  placeholder:'예) 서울특별시 건축 조례',                  base:'https://www.law.go.kr/ordinSc.do', param:'query', extra:{menuId:'3', subMenuId:'27', tabMenuId:'139'}, tag:'자치법규' },
+    admrul: { label:'행정규칙·고시명 또는 키워드', placeholder:'예) 접지설비 고시, 산업안전보건기준에 관한 규칙 예규', base:'https://www.law.go.kr/admRulSc.do', param:'query', extra:{menuId:'5', subMenuId:'41', tabMenuId:'183'}, tag:'행정규칙' }
+  };
+
+  const QUICK_LAWS = [
+    { name:'헌법', tag:'기본법' },
+    { name:'민법', tag:'기본법' },
+    { name:'상법', tag:'기본법' },
+    { name:'형법', tag:'기본법' },
+    { name:'행정기본법', tag:'행정' },
+    { name:'근로기준법', tag:'노동' },
+    { name:'산업안전보건법', tag:'노동/안전' },
+    { name:'정보통신망 이용촉진 및 정보보호 등에 관한 법률', tag:'정보통신' },
+    { name:'건설산업기본법', tag:'건설' },
+    { name:'전기사업법', tag:'전기/계측' },
+    { name:'개인정보 보호법', tag:'정보통신' },
+    { name:'저작권법', tag:'지식재산' }
+  ];
+
+  let activeCat = 'law';
+  let recent = [];
+
+  const tabsEl = document.getElementById('tabs');
+  const fieldLabel = document.getElementById('fieldLabel');
+  const qInput = document.getElementById('q');
+  const sealBtn = document.getElementById('sealBtn');
+  const form = document.getElementById('searchForm');
+  const quickAccessEl = document.getElementById('quickAccess');
+  const ledgerEl = document.getElementById('ledger');
+  const logCountEl = document.getElementById('logCount');
+  const hintText = document.getElementById('hintText');
+
+  function buildUrl(cat, keyword){
+    const cfg = CATS[cat];
+    const url = new URL(cfg.base);
+    if(cfg.extra){
+      Object.entries(cfg.extra).forEach(([k,v]) => url.searchParams.set(k,v));
+    }
+    url.searchParams.set(cfg.param, keyword);
+    return url.toString();
+  }
+
+  function setActiveTab(cat){
+    activeCat = cat;
+    [...tabsEl.children].forEach(btn => {
+      const isActive = btn.dataset.cat === cat;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    fieldLabel.textContent = CATS[cat].label;
+    qInput.placeholder = CATS[cat].placeholder;
+  }
+
+  tabsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab');
+    if(!btn) return;
+    setActiveTab(btn.dataset.cat);
+    qInput.focus();
+  });
+
+  function runSearch(cat, keyword){
+    const trimmed = keyword.trim();
+    if(!trimmed) { qInput.focus(); return; }
+
+    sealBtn.classList.remove('stamping');
+    void sealBtn.offsetWidth;
+    sealBtn.classList.add('stamping');
+
+    const url = buildUrl(cat, trimmed);
+    window.open(url, '_blank', 'noopener');
+
+    recent.unshift({
+      keyword: trimmed,
+      cat,
+      time: new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' })
+    });
+    recent = recent.slice(0, 8);
+    renderLedger();
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runSearch(activeCat, qInput.value);
+  });
+
+  function renderQuickAccess(){
+    quickAccessEl.innerHTML = '';
+    QUICK_LAWS.forEach(item => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.innerHTML = `${item.name}<span class="tag">${item.tag}</span>`;
+      chip.addEventListener('click', () => {
+        setActiveTab('law');
+        qInput.value = item.name;
+        runSearch('law', item.name);
+      });
+      quickAccessEl.appendChild(chip);
+    });
+  }
+
+  function renderLedger(){
+    logCountEl.textContent = `접수대장 ${recent.length}건`;
+    if(recent.length === 0){
+      ledgerEl.innerHTML = '<div class="empty-log">아직 검색 기록이 없습니다.</div>';
+      return;
+    }
+    ledgerEl.innerHTML = '';
+    recent.forEach((entry, idx) => {
+      const row = document.createElement('div');
+      row.className = 'ledger-row';
+      row.innerHTML = `
+        <span class="no">${String(idx+1).padStart(2,'0')}</span>
+        <span class="kw">${entry.keyword}</span>
+        <span class="cat">${CATS[entry.cat].tag}</span>
+        <span class="time">${entry.time}</span>
+      `;
+      row.addEventListener('click', () => {
+        setActiveTab(entry.cat);
+        qInput.value = entry.keyword;
+        runSearch(entry.cat, entry.keyword);
+      });
+      ledgerEl.appendChild(row);
+    });
+  }
+
+  renderQuickAccess();
+  renderLedger();
+</script>
+
+</body>
+</html>
